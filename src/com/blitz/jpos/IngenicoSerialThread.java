@@ -168,7 +168,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 		readThread.start();
 	}
 
-	enum E210_STATE {
+	public enum E210_STATE {
 		Repos,
 
 		RcRecuENQ, RcAttenteSTX,
@@ -190,6 +190,8 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	private int timeOut;
 
 	private byte[] m_strData = new byte[0];
+
+    private ArrayList<byte[]> m_trame = new ArrayList<byte[]>();
 
 	//private String m_strCMC7 = "";
 
@@ -284,7 +286,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 				case EmAttenteAckData:
 					// Si on a recus quelque chose
 					if (serialPort.getInputStream().available() > 0) {
-						// Si on nous répond positivement (ACK)
+						// Si on nous repond positivement (ACK)
 						if (RecoiChar(serialPort) == SpecialCar.ACK) {
 							// On envoi fin de transmition
 							EnvoiChar(serialPort, SpecialCar.EOT);
@@ -305,7 +307,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 					}
 					break;
 
-				// Reçois ENQ
+				// Recois ENQ
 				case RcRecuENQ:
 					EnvoiChar(serialPort, SpecialCar.ACK);
 					state = E210_STATE.RcAttenteSTX;
@@ -401,7 +403,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 						if (car == SpecialCar.EOT) {
 							//m_Erreurs = m_strData[2] & 0xF;
 							if (m_strData[2] == 0x31) {
-								//m_Erreurs = 0; // Annulation effectuée
+								//m_Erreurs = 0; // Annulation effectuee
 								state = E210_STATE.Repos;
 								// m_fonctionEL210 = EL210_FONCTION_LECTURECMC7;
 							} else {
@@ -413,7 +415,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 								 */
 								state = E210_STATE.Delai;
 							}
-						} else if (car == SpecialCar.STX) // Il a encore quelque chose à dire !
+						} else if (car == SpecialCar.STX) // Il a encore quelque chose a dire !
 						{
 							timeOut = 0;
 							state = E210_STATE.RcReceptionData;
@@ -439,6 +441,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 					break;
 
 				default:
+                    System.err.print("ERROR UNEXCPECTED STATE" + state.toString());
 					// Attente de 500 ms
 					// Thread.Sleep(500);
 					throw new JposException(JposConst.JPOS_E_FAILURE,
@@ -523,6 +526,14 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	public void setFunction(int ingenicoCheckFunction) {
 		this.m_fonctionEL210 = ingenicoCheckFunction;
 	}
+
+    public int getFunction() {
+		return this.m_fonctionEL210;
+	}
+
+    public E210_STATE getState() {
+        return this.state;
+    }
 
 	/*
 	 * public void serialEvent(SerialPortEvent event) { switch

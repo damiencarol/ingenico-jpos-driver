@@ -17,6 +17,9 @@
 
 package com.blitz.jpos;
 
+import com.blitz.jpos.IngenicoSerialThread.E210_STATE;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jpos.JposException;
 import jpos.events.DataEvent;
 import jpos.services.EventCallbacks;
@@ -152,7 +155,7 @@ public class IngenicoMICRService implements MICRService110 {
 		{
 			// wait a check information
 			while (this.internalThread.pistes.size() == 0)
-			{};
+			{}
 		}
 		else
 		{
@@ -171,13 +174,35 @@ public class IngenicoMICRService implements MICRService110 {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			};
+			}
 		}
 	}
 
 	@Override
 	public void beginRemoval(int timeout) throws JposException {
+
+        // Send ejection order
 		this.internalThread.setFunction(INGENICO_EJECT_CHECK);
+
+        int timeoutPassed = 0;
+        // Wait that reader release check
+        while (this.internalThread.getState() != E210_STATE.Repos && this.internalThread.getFunction() != 0)
+        {
+           if (timeout > 0)
+           {
+               if (timeoutPassed > timeout){
+					throw new JposException(JposConst.JPOS_E_TIMEOUT, "");
+				}
+
+               // Wait 100 milliseconds and save that time
+				timeoutPassed += 100;
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+           }
+        }
 	}
 
 	@Override
@@ -188,7 +213,7 @@ public class IngenicoMICRService implements MICRService110 {
 
 	@Override
 	public void endInsertion() throws JposException {
-		// Test si une piste à été renseignée
+		// Test si une piste a ete renseignee
 		if (this.internalThread.pistes.size() > 0)
 		{
 			this.dataEvent = new DataEvent(this, 0);
