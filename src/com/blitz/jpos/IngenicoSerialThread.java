@@ -138,18 +138,18 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	private IngenicoSerialThread() {
 	}
 
-	public IngenicoSerialThread(String commName) {
+	public IngenicoSerialThread(String commName) throws PortInUseException, UnsupportedCommOperationException {
 		this();
 
 		// portId = CommPortIdentifier.getPortIdentifier("COM3");
 
 		// initalize serial port
-		try {
+		//try {
 			serialPort = new RXTXPort(commName);// (SerialPort)
 												// portId.open("SimpleReadApp",
 												// 2000);
-		} catch (PortInUseException e) {
-		}
+		//} catch (PortInUseException e) {
+		//}
 
 		// try {
 		inputStream = serialPort.getInputStream();
@@ -162,13 +162,11 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 		// activate the DATA_AVAILABLE notifier
 		serialPort.notifyOnDataAvailable(true);
 
-		try {
+
 			// set port parameters
 			serialPort.setSerialPortParams(1200, SerialPort.DATABITS_7,
 					SerialPort.STOPBITS_2, SerialPort.PARITY_EVEN);
-		} catch (UnsupportedCommOperationException e) {
 
-		}
 
         this.busy = true;
         
@@ -200,7 +198,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 
 	private byte[] m_strData = new byte[0];
 
-    private ArrayList<byte[]> m_trame = new ArrayList<byte[]>();
+    //private ArrayList<byte[]> m_trame = new ArrayList<byte[]>();
 
 	//private String m_strCMC7 = "";
 
@@ -417,9 +415,9 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
                             {
                                 // ERROR information
                                 if (m_strData.length > 2 ){
-                                    String thirdCara = new String(m_strData.clone());
+                                    String thirdCara = new String(m_strData.clone()).substring(0, 2);
 
-                                    if (thirdCara.equals("400") == false)
+                                    if (thirdCara.charAt(1) != '0')
                                     {
                                         this.errorMessages.add(m_strData.clone());
                                     }
