@@ -18,18 +18,17 @@
 package com.blitz.jpos;
 
 import com.blitz.jpos.IngenicoSerialThread.E210_STATE;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jpos.JposException;
 import jpos.events.DataEvent;
 import jpos.services.EventCallbacks;
 import jpos.services.MICRService110;
 import jpos.MICRConst;
 import jpos.JposConst; 
+import jpos.events.ErrorEvent;
 
 public class IngenicoMICRService implements MICRService110 {
 	
-	//private static final int INGENICO_CANCEL_INSERT_CHECK = 30;
+	private static final int INGENICO_CANCEL_INSERT_CHECK = 30;
 	private static final int INGENICO_INSERT_CHECK = 51;
 	private static final int INGENICO_EJECT_CHECK = 52;
 	
@@ -133,35 +132,50 @@ public class IngenicoMICRService implements MICRService110 {
 	 */
 	@Override
 	public void beginInsertion(int timeout) throws JposException {
-		// Erase old check signature
-		this.internalThread.pistes.clear();
+
+        this.state = JposConst.JPOS_S_BUSY;
 		
 		// Check that timeout is correct
 		if ((timeout != JposConst.JPOS_FOREVER) && (timeout < 0)) {
 			throw new JposException(JposConst.JPOS_E_ILLEGAL, "An invalid timeout parameter was specified");	
 		}
+
+
+		// Throw INSERT COMMAND
+        while (this.internalThread.getBusy() == true)
+		{}
+		//System.out.println("ENVOI INGENICO_INSERT_CHECK");
+        this.internalThread.setFunction(INGENICO_INSERT_CHECK);
+        // wait command is received
+		while (this.internalThread.getBusy() == true)
+		{}
+		//System.out.println("recu par device INGENICO_INSERT_CHECK");
+
+        this.internalThread.pistes.clear();
+
 		
-		// Command une insertion
-		this.internalThread.setFunction(INGENICO_INSERT_CHECK);
-		
-		
-		// If timeout zero specified then return immediately
-		if (timeout == 0) {
-			return;
-		}
 
 		// If timeout is set to forever
 		if (timeout == JposConst.JPOS_FOREVER)
 		{
-			// wait a check information
+            // wait a check information
 			while (this.internalThread.pistes.size() == 0)
-			{}
+			{
+                if (this.internalThread.errorMessages.size() > 0)
+                {
+                    for (int i=0; i<this.internalThread.errorMessages.size(); i++)
+                    {
+                        System.err.println(new String(this.internalThread.errorMessages.get(i)));
+                    }
+                    throw new JposException(MICRConst.JPOS_EMICR_BADDATA, "");
+                }
+            }
 		}
 		else
 		{
 			int timeoutPassed = 0;
 			// wait a check information
-			while (this.internalThread.pistes.size() == 0)
+			while (this.internalThread.getState() != E210_STATE.RcAttenteEOT || this.internalThread.pistes.size() == 0)
 			{
 				if (timeoutPassed > timeout){
 					throw new JposException(JposConst.JPOS_E_TIMEOUT, "The specified time has elapsed without the form being properly inserted");
@@ -181,8 +195,35 @@ public class IngenicoMICRService implements MICRService110 {
 	@Override
 	public void beginRemoval(int timeout) throws JposException {
 
-        // Send ejection order
+        while (this.internalThread.getBusy() == true)
+		{}
+        // Throw INSERT COMMAND
+        System.out.println("ENVOI INGENICO_EJECT_CHECK");
 		this.internalThread.setFunction(INGENICO_EJECT_CHECK);
+        // wait command is received
+		while (this.internalThread.getBusy() == true)
+		{}
+		System.out.println("recu par device INGENICO_EJECT_CHECK");
+
+
+
+
+        // Send ejection order
+		//this.internalThread.setFunction(INGENICO_EJECT_CHECK);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         int timeoutPassed = 0;
         // Wait that reader release check
@@ -218,12 +259,18 @@ public class IngenicoMICRService implements MICRService110 {
 		{
 			this.dataEvent = new DataEvent(this, 0);
 			this.dataCount = 1;
-			
+	
 
 			this.rawData = new String(this.internalThread.pistes.get(0));
 			
 			this.cb.fireDataEvent(this.dataEvent);
 		}
+        else
+        {
+            ErrorEvent error = new ErrorEvent(this, JposConst.JPOS_E_EXTENDED, 0, 0, 0);
+            // Aucune data EROR
+            this.cb.fireErrorEvent(error);
+        }
 	}
 	
 	@Override
@@ -331,14 +378,20 @@ public class IngenicoMICRService implements MICRService110 {
 
 	@Override
 	public void claim(int timeout) throws JposException {
-		// TODO Auto-generated method stub
-		
-	}
 
+		while (this.internalThread.getBusy() == true)
+        {}
+        this.internalThread.setFunction(INGENICO_CANCEL_INSERT_CHECK);
+        while (this.internalThread.getBusy() == true)
+        {}
+        this.internalThread.setFunction(INGENICO_EJECT_CHECK);
+        while (this.internalThread.getBusy() == true)
+        {}
+	}
+    
 	@Override
 	public void close() throws JposException {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -407,7 +460,7 @@ public class IngenicoMICRService implements MICRService110 {
 	    try {
 			this.internalThread = new IngenicoSerialThread("COM" + this.commPortNumber);
 		} catch (Exception e) {
-			new JposException(JposConst.JPOS_E_FAILURE, "Could not create E210");
+			new JposException(JposConst.JPOS_E_FAILURE, "Could not create E210", e);
 		}
 
 	    //if (this.vLD == null) throw new JposException(111, "Could not create VirtualLineDisplay");
@@ -436,9 +489,8 @@ public class IngenicoMICRService implements MICRService110 {
 
 	@Override
 	public void deleteInstance() throws JposException {
-		
+		// Stop the thread
 		this.internalThread.abort();
-		
 	}
 
 	public void setCommPortNumber(int pCommPortNumber) throws JposException {

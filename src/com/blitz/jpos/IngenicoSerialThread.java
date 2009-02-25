@@ -32,6 +32,13 @@ import jpos.JposException;
 
 public class IngenicoSerialThread implements Runnable//, EventCallbacks// , SerialPortEventListener
 {
+    private boolean busy;
+    public ArrayList<byte[]> errorMessages = new ArrayList<byte[]>();
+
+    boolean getBusy() {
+        return this.busy;
+    }
+    
 	class SpecialCar {
 		public static final byte STX = 2;
 		public static final byte ETX = 3;
@@ -163,6 +170,8 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 
 		}
 
+        this.busy = true;
+        
 		// start the read thread
 		readThread = new Thread(this);
 		readThread.start();
@@ -173,7 +182,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 
 		RcRecuENQ, RcAttenteSTX,
 
-		EmEmetENQ, EmAttenteACKaENQ, EmData, EmAttenteACKaData, EmAttenteAckData,
+		EmEmetENQ, EmAttenteACKaENQ, EmData, EmAttenteAckData,
 
 		MASTER_SEND_COMMAND,
 
@@ -210,18 +219,23 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 			 * 
 			 * }
 			 */
+            
+            int LRC_Calcul = 0;
+            int busyCount = 0;
 
 			while (true) {
+				//System.out.println("busy=" + busy);
 				// Attente de 1s (1000 ms)
 				// Thread.Sleep(1000);
+                //if (state != E210_STATE.Repos)
 				//System.out.println("etape=" + state.toString());
-				if (m_strData.length >= 48 && m_strData[0] == 51)// 48
-				{//System.out.println("new_data size=" + Integer.toString(m_strData.length));
+				//if (m_strData.length >= 48 && m_strData[0] == 51)// 48
+				//{//System.out.println("new_data size=" + Integer.toString(m_strData.length));
 					//m_strCMC7 = "C"	+ (new String(m_strData)).substring(14,	26);
-					this.pistes.clear();
+					//this.pistes.clear();
 					//System.out.println("etape=" + state.toString());
-					this.pistes.add(m_strData.clone());
-				}
+					//this.pistes.add(m_strData.clone());
+				//}
 				/*System.out.println("new_data");
 				 if (m_strData.length >= 40 && m_strData[0] == 0x51)//48
 			{
@@ -231,20 +245,30 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 				
 				
 
-				int LRC_Calcul = 0;
+				
 				switch (state) {
 
 				// Repos
 				case Repos:
 					if (this.inputStream.available() > 0) {
+                        busyCount = 0;
+                        busy = true;
 						if (RecoiChar(serialPort) == SpecialCar.ENQ) {
 							state = E210_STATE.RcRecuENQ;
 						}
 					} else {
 						if (m_fonctionEL210 != 0) {
-							state = E210_STATE.EmEmetENQ;
-						} else {							
+                            busyCount = 0;
+							busy = true;
+                            state = E210_STATE.EmEmetENQ;
+						} else {
 							Thread.sleep(100);
+
+                            busyCount++;
+                            if (busyCount > 6)
+                            {
+                                this.busy = false;
+                            }
 						}
 					}
 					break;
@@ -259,10 +283,16 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 				case EmAttenteACKaENQ:
 					if (serialPort.getInputStream().available() > 0) {
 						timeOut = 0;
-						if (RecoiChar(serialPort) == SpecialCar.ACK) {
+                        byte car = RecoiChar(serialPort);
+
+						if (car == SpecialCar.ACK) {
 							state = E210_STATE.EmData;
 						} else {
-							state = E210_STATE.Repos;
+                            if (car == SpecialCar.ENQ) {
+                                state = E210_STATE.RcRecuENQ;
+                            }
+                            else
+                                state = E210_STATE.Repos;
 						}
 					} else {
 						if (timeOut > 10) {
@@ -275,6 +305,9 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 					break;
 
 				case EmData:
+                    // Erase error messages
+                    this.errorMessages.clear();
+
 					byte[] tab = new byte[1];
 					tab[0] = (byte) m_fonctionEL210;
 					// tab[1] = (byte)EL210_FONCTION_EJECTION_TOTALE;
@@ -294,7 +327,9 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 							state = E210_STATE.Repos;
 						} else {
 							// Pas bon
-							state = E210_STATE.EmErreurData;
+							//state = E210_STATE.EmErreurData;
+                            m_fonctionEL210 = 0;
+							state = E210_STATE.Repos;
 						}
 						timeOut = 0;
 					} else {
@@ -349,15 +384,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 							}
 
 							new_data[new_data.length - 1] = car;
-							m_strData = new_data;
-
-							/*System.out.println("new_data");
-							 if (m_strData.length >= 40 && m_strData[0] == 0x51)//48
-						{
-								 m_strCMC7 = "C" + (new String(m_strData)).substring(14, 34);
-								 this.pistes.add(m_strCMC7.getBytes());
-							 }*/
-							 
+							m_strData = new_data;							 
 						}
 						timeOut = 0;
 					} else {
@@ -374,14 +401,36 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 				case RcAttenteLRC:
 
 					if (serialPort.getInputStream().available() > 0) {
+
 						byte LRC_Recu = RecoiChar(serialPort);
 
 						if (LRC_Recu == LRC_Calcul) {
-							EnvoiChar(serialPort, SpecialCar.ACK);
+                            EnvoiChar(serialPort, SpecialCar.ACK);
+                            LRC_Calcul = 0; // (TEST) Remise à zéro du calcul LRC
+
+                            // Add check signature
+                            if (m_strData.length == 48 && m_strData[0] == 51)
+                            {
+								 this.pistes.add(m_strData.clone());
+                            }
+                            else
+                            {
+                                // ERROR information
+                                if (m_strData.length > 2 ){
+                                    String thirdCara = new String(m_strData.clone());
+
+                                    if (thirdCara.equals("400") == false)
+                                    {
+                                        this.errorMessages.add(m_strData.clone());
+                                    }
+                                }
+                            }
+
 							timeOut = 0;
 							state = E210_STATE.RcAttenteEOT;
 						} else {
 							EnvoiChar(serialPort, SpecialCar.NAK);
+
 							timeOut = 0;
 							state = E210_STATE.RcAttenteSTX;
 						}
@@ -401,6 +450,16 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 						int car = RecoiChar(serialPort);
 
 						if (car == SpecialCar.EOT) {
+
+                               /*  System.out.println("CHECK DATA ???");
+                            if (m_strData.length == 48 && m_strData[0] == 51)
+                            {
+								 this.pistes.add(m_strData.clone());
+                                 System.out.println("DATA !!!");
+                            }*/
+                            
+
+
 							//m_Erreurs = m_strData[2] & 0xF;
 							if (m_strData[2] == 0x31) {
 								//m_Erreurs = 0; // Annulation effectuee
@@ -434,7 +493,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 					break;
 
 				case Delai:					
-					// Thread.Sleep(2000); // Attends 2 secondes
+					 //Thread.sleep(2000); // Attends 2 secondes
 					Thread.sleep(100); // Attends 2 secondes
 					// m_fonctionEL210= EL210_FONCTION_LECTURECMC7;
 					state = E210_STATE.Repos;
@@ -524,6 +583,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	byte[] readBuffer = null;
 
 	public void setFunction(int ingenicoCheckFunction) {
+        this.busy = true;
 		this.m_fonctionEL210 = ingenicoCheckFunction;
 	}
 
