@@ -17,50 +17,47 @@
 
 package com.blitz.jpos;
 
-import java.lang.reflect.Constructor;
 import jpos.JposException;
 import jpos.config.JposEntry;
 import jpos.config.JposEntry.Prop;
 import jpos.loader.JposServiceInstance;
 import jpos.loader.JposServiceInstanceFactory;
 
-public final class IngenicoMICRServiceInstanceFactory
-  implements JposServiceInstanceFactory
-{
-  @SuppressWarnings("unchecked")
-public JposServiceInstance createInstance(String paramString, JposEntry paramJposEntry)
-    throws JposException
-  {
-    if (!(paramJposEntry.hasPropertyWithName("serviceClass")))
-      throw new JposException(104, "The JposEntry does not contain the 'serviceClass' property");
+/**
+ * Build Ingenico MICR service
+ * <p>
+ * Control the properties in JavaPOS/JCL file
+ * 
+ * @author D.Carol
+ */
+public final class IngenicoMICRServiceInstanceFactory implements
+		JposServiceInstanceFactory {
+	public JposServiceInstance createInstance(String paramString,
+			JposEntry paramJposEntry) throws JposException {
+		if (!(paramJposEntry.hasPropertyWithName("serviceClass")))
+			throw new JposException(104,
+					"The JposEntry does not contain the 'serviceClass' property");
 
-    // Check that property "CommPortNumber" exist
-    if (!(paramJposEntry.hasPropertyWithName("commPortNumber")))
-        throw new JposException(104, "The JposEntry does not contain the 'commPortNumber' property");
+		// Check that property "CommPortNumber" exist
+		if (!(paramJposEntry.hasPropertyWithName("portName")))
+			throw new JposException(104,
+					"The JposEntry does not contain the 'commPortNumber' property");
 
-    JposServiceInstance localJposServiceInstance = null;
-    try
-    {
-      String str = (String)paramJposEntry.getPropertyValue("serviceClass");
-      Class localClass = Class.forName(str);
+		// Get the serial port number
+		int lCommPortNumber = -1;
+		Prop lCommPortNumberProp = paramJposEntry.getProp("portName");
+		lCommPortNumber = Integer.parseInt(lCommPortNumberProp
+				.getValueAsString());
 
-      Class[] arrayOfClass = new Class[0];
+		IngenicoMICRService localJposServiceInstance;
+		try {
+			localJposServiceInstance = new IngenicoMICRService();
+			localJposServiceInstance.setCommPortNumber(lCommPortNumber);
 
-      Constructor localConstructor = localClass.getConstructor(arrayOfClass);
-
-      localJposServiceInstance = (JposServiceInstance)localConstructor.newInstance(arrayOfClass);
-
-      IngenicoMICRService localDeviceService = (IngenicoMICRService)localJposServiceInstance;
-      
-      // Get the comm port number
-      int lCommPortNumber = -1;
-      Prop lCommPortNumberProp = paramJposEntry.getProp("commPortNumber");
-      lCommPortNumber = Integer.parseInt(lCommPortNumberProp.getValueAsString());
-      localDeviceService.setCommPortNumber(lCommPortNumber);
-    }
-    catch (Exception localException) {
-      throw new JposException(jpos.JposConst.JPOS_E_NOSERVICE, "Could not create the service instance!", localException);
-    }
-    return localJposServiceInstance;
-  }
+		} catch (Exception localException) {
+			throw new JposException(jpos.JposConst.JPOS_E_NOSERVICE,
+					"Could not create the service instance!", localException);
+		}
+		return localJposServiceInstance;
+	}
 }
