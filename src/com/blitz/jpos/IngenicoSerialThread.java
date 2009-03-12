@@ -192,7 +192,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	}
 
 	private E210_STATE state = E210_STATE.Repos;
-	private int m_fonctionEL210 = 0;
+	private byte[] m_fonctionEL210 = new byte[0];
 
 	private int timeOut;
 
@@ -255,7 +255,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 							state = E210_STATE.RcRecuENQ;
 						}
 					} else {
-						if (m_fonctionEL210 != 0) {
+						if (m_fonctionEL210.length != 0) {
                             busyCount = 0;
 							busy = true;
                             state = E210_STATE.EmEmetENQ;
@@ -306,9 +306,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
                     // Erase error messages
                     this.errorMessages.clear();
 
-					byte[] tab = new byte[1];
-					tab[0] = (byte) m_fonctionEL210;
-					// tab[1] = (byte)EL210_FONCTION_EJECTION_TOTALE;
+					byte[] tab = m_fonctionEL210.clone();
 					SendMessage(serialPort, tab);
 					state = E210_STATE.EmAttenteAckData;
 					timeOut = 0;
@@ -321,12 +319,12 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 						if (RecoiChar(serialPort) == SpecialCar.ACK) {
 							// On envoi fin de transmition
 							EnvoiChar(serialPort, SpecialCar.EOT);
-							m_fonctionEL210 = 0;
+							m_fonctionEL210 = new byte[0];
 							state = E210_STATE.Repos;
 						} else {
 							// Pas bon
 							//state = E210_STATE.EmErreurData;
-                            m_fonctionEL210 = 0;
+                            m_fonctionEL210 = new byte[0];
 							state = E210_STATE.Repos;
 						}
 						timeOut = 0;
@@ -580,14 +578,14 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	
 	byte[] readBuffer = null;
 
-	public void setFunction(int ingenicoCheckFunction) {
+	public void setFunction(byte[] ingenicoCheckFunction) {
         this.busy = true;
 		this.m_fonctionEL210 = ingenicoCheckFunction;
 	}
 
-    public int getFunction() {
+ /* *  public int getFunction() {
 		return this.m_fonctionEL210;
-	}
+	}*/
 
     public E210_STATE getState() {
         return this.state;

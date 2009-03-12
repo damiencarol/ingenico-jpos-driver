@@ -28,7 +28,7 @@ import jpos.services.MICRService110;
 public class IngenicoMICRService implements MICRService110 {
 	
 	private static final int INGENICO_CANCEL_INSERT_CHECK = 30;
-	private static final int INGENICO_INSERT_CHECK = 51;
+	private static final byte INGENICO_INSERT_CHECK = 0x33;
 	private static final int INGENICO_EJECT_CHECK = 52;
 	
 	private IngenicoSerialThread internalThread = null;
@@ -144,8 +144,9 @@ public class IngenicoMICRService implements MICRService110 {
 		// Throw INSERT COMMAND
         while (this.internalThread.getBusy() == true)
 		{}
-		//System.out.println("ENVOI INGENICO_INSERT_CHECK");
-        this.internalThread.setFunction(INGENICO_INSERT_CHECK);
+		
+        byte[] data = { INGENICO_INSERT_CHECK };
+        this.internalThread.setFunction(data);
         // wait command is received
 		while (this.internalThread.getBusy() == true)
 		{}
@@ -190,16 +191,23 @@ public class IngenicoMICRService implements MICRService110 {
 				}
 			}
 		}
+		
+		// Change state to idle
+		this.state = JposConst.JPOS_S_IDLE;
 	}
 
 	@Override
 	public void beginRemoval(int timeout) throws JposException {
-
+	    
+	    // Change state to busy
+        this.state = JposConst.JPOS_S_BUSY;
+        
 	    // Wait the device is not busy
         while (this.internalThread.getBusy() == true)
 		{}
         // Throw INSERT COMMAND
-		this.internalThread.setFunction(INGENICO_EJECT_CHECK);
+        byte[] data = { INGENICO_EJECT_CHECK };
+		this.internalThread.setFunction(data);
         // wait command is received
 		while (this.internalThread.getBusy() == true)
 		{}
@@ -230,6 +238,9 @@ public class IngenicoMICRService implements MICRService110 {
 				}
            }
         }
+        
+        // Change state to busy
+        this.state = JposConst.JPOS_S_IDLE;       
 	}
 
 	@Override
@@ -368,22 +379,33 @@ public class IngenicoMICRService implements MICRService110 {
 	    
 	    try
     	{
+	        System.out.println("1");
             // Create the internal thread
             this.internalThread = new IngenicoSerialThread("COM" + this.commPortNumber);
+            System.out.println("2");
+            
+            // Wait that the communication thread is not busy
+            while (this.internalThread.getBusy() == true) 
+            {}System.out.println("3");
+            
+            // Command the physical device to cancel insert operation
+            byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
+            this.internalThread.setFunction(data);
+
+            
+            // Wait that the communication thread is not busy
+            while (this.internalThread.getBusy() == true) 
+            {}System.out.println("5");
+            
+            // Command the physical device to eject check if their are one in
+            byte[] data2 = { INGENICO_EJECT_CHECK };
+            this.internalThread.setFunction(data2);
+            System.out.println("6");
             
             // Wait that the communication thread is not busy
             while (this.internalThread.getBusy() == true) 
             {}
-            // Command the physical device to cancel insert operation
-            this.internalThread.setFunction(INGENICO_CANCEL_INSERT_CHECK);
-            // Wait that the communication thread is not busy
-            while (this.internalThread.getBusy() == true) 
-            {}
-            // Command the physical device to eject check if their are one in
-            this.internalThread.setFunction(INGENICO_EJECT_CHECK);
-            // Wait that the communication thread is not busy
-            while (this.internalThread.getBusy() == true) 
-            {}
+            System.out.println("7");
             
             this.claimed = true;
     	}
@@ -492,12 +514,14 @@ public class IngenicoMICRService implements MICRService110 {
 	        while (this.internalThread.getBusy() == true) 
 	        {}
 	        // Command the physical device to cancel insert operation
-	        this.internalThread.setFunction(INGENICO_CANCEL_INSERT_CHECK);
+	        byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
+	        this.internalThread.setFunction(data);
 	        // Wait that the communication thread is not busy
 	        while (this.internalThread.getBusy() == true) 
 	        {}
 	        // Command the physical device to eject check if their are one in
-	        this.internalThread.setFunction(INGENICO_EJECT_CHECK);
+	        byte[] data2 = { INGENICO_EJECT_CHECK };
+            this.internalThread.setFunction(data2);
 	        // Wait that the communication thread is not busy
 	        while (this.internalThread.getBusy() == true) 
 	        {}
