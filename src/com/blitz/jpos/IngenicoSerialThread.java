@@ -38,7 +38,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
     boolean getBusy() {
         return this.busy;
     }
-    
+
 	class SpecialCar {
 		public static final byte STX = 2;
 		public static final byte ETX = 3;
@@ -68,7 +68,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	/*
 	 * public static void main(String[] args) { boolean portFound = false;
 	 * String defaultPort;
-	 * 
+	 *
 	 * // determine the name of the serial port on several operating systems
 	 * String osname = System.getProperty("os.name","").toLowerCase(); if (
 	 * osname.startsWith("windows") ) { // windows defaultPort = "COM1"; } else
@@ -77,11 +77,11 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	 * else {
 	 * System.out.println("Sorry, your operating system is not supported");
 	 * return; }
-	 * 
+	 *
 	 * if (args.length > 0) { defaultPort = args[0]; }
-	 * 
+	 *
 	 * System.out.println("Set default port to "+defaultPort);
-	 * 
+	 *
 	 * // parse ports and if the default port is found, initialized the reader
 	 * portList = CommPortIdentifier.getPortIdentifiers(); while
 	 * (portList.hasMoreElements()) { portId = (CommPortIdentifier)
@@ -90,10 +90,10 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	 * (portId.getName().equals(defaultPort)) {
 	 * System.out.println("Found port: "+defaultPort); portFound = true; // init
 	 * reader thread E210SerialThread reader = new E210SerialThread(); } }
-	 * 
+	 *
 	 * } if (!portFound) { System.out.println("port " + defaultPort +
 	 * " not found."); }
-	 * 
+	 *
 	 * }
 	 */
 
@@ -163,40 +163,45 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 		serialPort.notifyOnDataAvailable(true);
 
 
-			// set port parameters
-			serialPort.setSerialPortParams(1200, SerialPort.DATABITS_7,
-					SerialPort.STOPBITS_2, SerialPort.PARITY_EVEN);
+        // set port parameters
+        serialPort.setSerialPortParams(1200, SerialPort.DATABITS_7, SerialPort.STOPBITS_2, SerialPort.PARITY_EVEN);
 
 
         this.busy = true;
-        
+
 		// start the read thread
 		readThread = new Thread(this);
 		readThread.start();
-	}
+    }
 
-	public enum E210_STATE {
-		Repos,
+    public enum E210_STATE
+    {
+        Repos,
 
-		RcRecuENQ, RcAttenteSTX,
+        RcRecuENQ, 
+        RcAttenteSTX,
 
-		EmEmetENQ, EmAttenteACKaENQ, EmData, EmAttenteAckData,
+        EmEmetENQ, 
+        EmAttenteACKaENQ, 
+        EmData, 
+        EmAttenteAckData,
 
-		MASTER_SEND_COMMAND,
+        MASTER_SEND_COMMAND, SLAVE_IDE, SLAVE_RECEIVE,
 
-		SLAVE_IDE, SLAVE_RECEIVE,
+        RcAttenteLRC, 
+        RcAttenteEOT, 
+        RcReceptionData,
 
-		RcAttenteLRC, RcAttenteEOT, RcReceptionData,
+        Delai, EmErreurData
+    }
 
-		Delai, EmErreurData
-	}
 
-	private E210_STATE state = E210_STATE.Repos;
-	private byte[] m_fonctionEL210 = new byte[0];
+    private E210_STATE state = E210_STATE.Repos;
+    private byte[] m_fonctionEL210 = new byte[0];
 
-	private int timeOut;
 
-	private byte[] m_strData = new byte[0];
+    private int timeOut;
+    private byte[] m_strData = new byte[0];
 
     //private ArrayList<byte[]> m_trame = new ArrayList<byte[]>();
 
@@ -204,20 +209,20 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 
 	//private int m_Erreurs = 0;
 
-	public void run() {
-		// first thing in the thread, we initialize the write operation
-		initwritetoport();
-		try {
+    public void run() {
+        // first thing in the thread, we initialize the write operation
+        initwritetoport();
+        try {
 			/*
 			 * while (true) {
-			 * 
-			 * 
+			 *
+			 *
 			 * // write string to port, the serialEvent will read it
 			 * //writetoport(); writeEnq(); Thread.sleep(1000);
-			 * 
+			 *
 			 * }
 			 */
-            
+
             int LRC_Calcul = 0;
             int busyCount = 0;
 
@@ -240,10 +245,10 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 					 m_strCMC7 = "C" + (new String(m_strData)).substring(14, 34);
 					 this.pistes.add(m_strCMC7.getBytes());
 				 }*/
-				
-				
 
-				
+
+
+
 				switch (state) {
 
 				// Repos
@@ -380,7 +385,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 							}
 
 							new_data[new_data.length - 1] = car;
-							m_strData = new_data;							 
+							m_strData = new_data;
 						}
 						timeOut = 0;
 					} else {
@@ -453,7 +458,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 								 this.pistes.add(m_strData.clone());
                                  System.out.println("DATA !!!");
                             }*/
-                            
+
 
 
 							//m_Erreurs = m_strData[2] & 0xF;
@@ -488,7 +493,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 					}
 					break;
 
-				case Delai:					
+				case Delai:
 					 //Thread.sleep(2000); // Attends 2 secondes
 					Thread.sleep(100); // Attends 2 secondes
 					// m_fonctionEL210= EL210_FONCTION_LECTURECMC7;
@@ -513,12 +518,20 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 		}
 	}
 
-	private void SendMessage(RXTXPort serialPort2, byte[] tab) {
+    /**
+     * Send a message to the device
+     *
+     * @param serialPort2
+     *            serial port to use
+     * @param tab
+     *            data to send
+     */
+    private void SendMessage(RXTXPort serialPort2, byte[] tab) {
 
-		byte[] tab_to_send = new byte[tab.length + 3];
-		
-		// Write STX
-		tab_to_send[0] = SpecialCar.STX;
+        byte[] tab_to_send = new byte[tab.length + 3];
+
+        // Write STX
+        tab_to_send[0] = SpecialCar.STX;
 		// Write Data
 		byte lrc = 0;
 		for (int i = 0; i < tab.length; i++)
@@ -532,7 +545,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 		// Write the lrc;
 		tab_to_send[tab.length + 2] = lrc;
 
-		
+
 		// Send to serial buffer
 		try {
 			serialPort2.getOutputStream().write(tab_to_send);
@@ -542,14 +555,21 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 		}
 	}
 
-	private void EnvoiChar(RXTXPort serialPort2, byte character) {
+    /**
+     * Send one byte to the device
+     *
+     * @param serialPort2
+     *            serial port to use
+     * @param character
+     *            data to send
+     */
+    private void EnvoiChar(RXTXPort serialPort2, byte character) {
 		try {
 			serialPort2.getOutputStream().write(character);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 	private byte RecoiChar(RXTXPort serialPort2) {
@@ -575,17 +595,13 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 			this.serialPort.close();
 		}
 	}
-	
+
 	byte[] readBuffer = null;
 
 	public void setFunction(byte[] ingenicoCheckFunction) {
         this.busy = true;
 		this.m_fonctionEL210 = ingenicoCheckFunction;
 	}
-
- /* *  public int getFunction() {
-		return this.m_fonctionEL210;
-	}*/
 
     public E210_STATE getState() {
         return this.state;
@@ -604,7 +620,7 @@ public class IngenicoSerialThread implements Runnable//, EventCallbacks// , Seri
 	 * inputStream..read(readBuffer); } // print data String result = new
 	 * String(readBuffer); System.out.println("Read: "+result); } catch
 	 * (IOException e) {}
-	 * 
+	 *
 	 * break; } }
 	 */
 }
