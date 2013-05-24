@@ -61,27 +61,27 @@ public class IngenicoMICRService implements MICRService110 {
 		try {
 			// Create the internal thread
 			this.internalThread = new IngenicoSerialThread("COM" + this.commPortNumber);
-
+			System.out.println(1);
 			// Wait that the communication thread is not busy
 			while (this.internalThread.isBusy() == true) {
 			}
-
+			System.out.println(2);
 			// Command the physical device to cancel insert operation
 			byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data);
-
+			System.out.println(3);
 			// Wait that the communication thread is not busy
 			while (this.internalThread.isBusy() == true) {
 			}
-
+			System.out.println(4);
 			// Command the physical device to eject check if their are one in
 			byte[] data2 = { INGENICO_EJECT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data2);
-
+			System.out.println(5);
 			// Wait that the communication thread is not busy
 			while (this.internalThread.isBusy() == true) {
 			}
-
+			System.out.println(6);
 			this.claimed = true;
 		} catch (Exception e) {
 			throw new JposException(JposConst.JPOS_E_NOTCLAIMED, "Error in device preparation", e);
