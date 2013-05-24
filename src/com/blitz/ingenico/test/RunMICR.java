@@ -23,7 +23,7 @@ public class RunMICR {
 	public static void main(String[] args) {
 		try {
 			IngenicoMICRService service = new IngenicoMICRService();
-			EventCallbacks cb = new EventCallbacks() {
+			EventCallbacks cb = new EventCallbacks() { // Lazy callback init ...
 
 				@Override
 				public BaseControl getEventSource() {

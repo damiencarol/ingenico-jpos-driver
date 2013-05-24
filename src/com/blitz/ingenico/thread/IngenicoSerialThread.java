@@ -24,14 +24,13 @@ import gnu.io.UnsupportedCommOperationException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.blitz.utils.SpecialByteChar;
-
 import jpos.JposConst;
 import jpos.JposException;
+
+import com.blitz.utils.SpecialByteChar;
 
 public class IngenicoSerialThread implements Runnable {
 	private boolean busy;
@@ -69,7 +68,7 @@ public class IngenicoSerialThread implements Runnable {
 	public List<byte[]> getLines() {
 		return this.lines;
 	}
-	
+
 	public void clearLines() {
 		lines.clear();
 	}
@@ -139,6 +138,8 @@ public class IngenicoSerialThread implements Runnable {
 			int busyCount = 0;
 
 			while (true) {
+				System.out.println(">>>>> Thread State : " + this.state);
+				System.out.println(">>>>> THREAD BUSY-" + busy);
 				switch (state) {
 
 				// Repos
@@ -199,9 +200,9 @@ public class IngenicoSerialThread implements Runnable {
 					// Erase error messages
 					this.errorMessages.clear();
 
-					//byte[] tab = functionsToSend.clone();
+					// byte[] tab = functionsToSend.clone();
 					int functionsLength = functionsToSend.length;
-					byte[] datas = new byte[functionsLength + datasToSend.length];					
+					byte[] datas = new byte[functionsLength + datasToSend.length];
 					for (int i = 0; i < functionsLength; i++) {
 						datas[i] = functionsToSend[i];
 					}
@@ -348,9 +349,7 @@ public class IngenicoSerialThread implements Runnable {
 							} else {
 								state = IngenicoSerialThreadState.PAUSE;
 							}
-						} else if (car == SpecialByteChar.STX) // MOAR DATAS
-																// INCOMING !
-						{
+						} else if (car == SpecialByteChar.STX) { // MOAR DATAS
 							timeOut = 0;
 							state = IngenicoSerialThreadState.RC_RECEIVING_DATA;
 						} else {
