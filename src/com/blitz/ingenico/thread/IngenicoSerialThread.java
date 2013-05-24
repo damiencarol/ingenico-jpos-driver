@@ -138,8 +138,6 @@ public class IngenicoSerialThread implements Runnable {
 			int busyCount = 0;
 
 			while (true) {
-				System.out.println(">>>>> Thread State : " + this.state);
-				System.out.println(">>>>> THREAD BUSY-" + busy);
 				switch (state) {
 
 				// Repos
