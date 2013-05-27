@@ -34,17 +34,30 @@ import com.blitz.ingenico.thread.concurrency.WaitDataHelper;
 import com.blitz.ingenico.thread.concurrency.WaitNotBusyHelper;
 import com.blitz.utils.SpecialByteChar;
 
-
 public class IngenicoSerialThread implements Runnable {
 
-	private final WaitNotBusyHelper busyWaiter = new WaitNotBusyHelper();
+	private final WaitNotBusyHelper notBusyWaiter = new WaitNotBusyHelper();
 
-	public WaitNotBusyHelper getBusyWaiter() {
-		return this.busyWaiter;
+	/**
+	 * Return the {@link WaitNotBusyHelper} instance managing this thread
+	 * notifications on device ready to work. Use this to wait for the device to
+	 * be ready for new tasks.
+	 * 
+	 * @return the {@link WaitNotBusyHelper} instance
+	 */
+	public WaitNotBusyHelper getNotBusyWaiter() {
+		return this.notBusyWaiter;
 	}
 
 	private final WaitDataHelper dataWaiter = new WaitDataHelper();
 
+	/**
+	 * Return the {@link WaitDataHelper} instance managing this thread
+	 * notifications on new datas. Use this ti wait for datas comming from the
+	 * device.
+	 * 
+	 * @return the {@link WaitNotBusyHelper} instance
+	 */
 	public WaitDataHelper getDataWaiter() {
 		return this.dataWaiter;
 	}
@@ -176,9 +189,9 @@ public class IngenicoSerialThread implements Runnable {
 							busyCount++;
 							if (busyCount > 6) {
 								this.busy = false;
-								synchronized (busyWaiter) {
+								synchronized (notBusyWaiter) {
 									// Notify that not busy
-									busyWaiter.notify();
+									notBusyWaiter.notifyNotBusy();
 								}
 							}
 						}
@@ -433,7 +446,7 @@ public class IngenicoSerialThread implements Runnable {
 	 * order that requires no data. This is a low level function. You need
 	 * knowledges about the Ingenico protocol to use this one.
 	 * 
-	 * @param ingenicoCheckFunctions
+	 * @param functions
 	 *            a byte array of function codes. There can't be more than 16
 	 *            codes. If the array contains more than 16 codes, it will be
 	 *            truncated to 16. The device will execute theses codes
@@ -450,13 +463,13 @@ public class IngenicoSerialThread implements Runnable {
 	 * Send an order message to the device. This is a low level function. You
 	 * need knowledges about the Ingenico protocol to use this one.
 	 * 
-	 * @param ingenicoCheckFunctions
+	 * @param functions
 	 *            A byte array of function codes. There can't be more than 16
 	 *            codes. If the array contains more than 16 codes, it will be
 	 *            truncated to 16. The device will execute theses codes
 	 *            sequentially. The sequence must be coherent to ensure correct
 	 *            running of the device.
-	 * @param ingenicoCheckDatas
+	 * @param datas
 	 *            A byte array of datas to send with the codes. Can be null.
 	 */
 	public void sendOrderMessage(byte[] functions, byte[] datas) {

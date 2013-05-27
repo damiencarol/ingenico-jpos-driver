@@ -29,9 +29,9 @@ import jpos.services.MICRService110;
 
 public class IngenicoMICRService implements MICRService110 {
 
-	private static final int INGENICO_CANCEL_INSERT_CHECK = 30;
+	private static final byte INGENICO_CANCEL_INSERT_CHECK = 0x30;
 	private static final byte INGENICO_INSERT_CHECK = 0x33;
-	private static final int INGENICO_EJECT_CHECK = 52;
+	private static final int INGENICO_EJECT_CHECK = 0x34;
 
 	private IngenicoSerialThread internalThread = null;
 	private int commPortNumber;
@@ -125,8 +125,8 @@ public class IngenicoMICRService implements MICRService110 {
 		waitThreadNotBusy();
 
 		this.internalThread.clearLines();
-		
-		if(!waitThreadDatas(timeout)) {
+
+		if (!waitThreadDatas(timeout)) {
 			throw new JposException(JposConst.JPOS_E_TIMEOUT, "The specified time has elapsed without the form being properly inserted");
 		}
 
@@ -159,6 +159,10 @@ public class IngenicoMICRService implements MICRService110 {
 		// Change state to busy
 		this.state = JposConst.JPOS_S_BUSY;
 
+		// Check that timeout is correct
+		if ((timeout != JposConst.JPOS_FOREVER) && (timeout < 0)) {
+			throw new JposException(JposConst.JPOS_E_ILLEGAL, "An invalid timeout parameter was specified");
+		}
 		// Wait the device is not busy
 		waitThreadNotBusy();
 		// Throw INSERT COMMAND
@@ -168,8 +172,8 @@ public class IngenicoMICRService implements MICRService110 {
 		waitThreadNotBusy();
 
 		// Wait that reader release check
-		if(!waitThreadDatas(timeout)) {
-			throw new JposException(JposConst.JPOS_E_TIMEOUT, "Timeout");
+		if (!waitThreadDatas(timeout)) {
+			throw new JposException(JposConst.JPOS_E_TIMEOUT, "The specified time has elapsed with a check being properly ejected");
 		}
 
 		// Change state to busy
@@ -455,49 +459,49 @@ public class IngenicoMICRService implements MICRService110 {
 	public void deleteInstance() throws JposException {
 	}
 
-	private boolean waitThreadNotBusy() {
+	private boolean waitThreadNotBusy() throws JposException {
 		try {
-			internalThread.getBusyWaiter().waitNotBusy();
+			internalThread.getNotBusyWaiter().waitNotBusy();
 		} catch (InterruptedException e) {
-
+			throw new JposException(JposConst.JPOS_E_FAILURE, "The waiting service has been interrupted");
 		}
-		return internalThread.getBusyWaiter().isNotified();
+		return internalThread.getNotBusyWaiter().isNotified();
 	}
-	
-	private boolean waitThreadNotBusy(int timeout) {
-		if(timeout == JposConst.JPOS_FOREVER) {
+
+	private boolean waitThreadNotBusy(int timeout) throws JposException {
+		if (timeout == JposConst.JPOS_FOREVER) {
 			return waitThreadDatas();
 		} else {
 			try {
-				internalThread.getBusyWaiter().waitNotBusy(timeout);
-				
-			} catch (InterruptedException e) {
+				internalThread.getNotBusyWaiter().waitNotBusy(timeout);
 
+			} catch (InterruptedException e) {
+				throw new JposException(JposConst.JPOS_E_FAILURE, "The waiting service has been interrupted");
 			}
-			return internalThread.getBusyWaiter().isNotified();
+			return internalThread.getNotBusyWaiter().isNotified();
 		}
 	}
 
-	private boolean waitThreadDatas() {
+	private boolean waitThreadDatas() throws JposException {
 		try {
 			internalThread.getDataWaiter().waitData();
 		} catch (InterruptedException e) {
-
+			throw new JposException(JposConst.JPOS_E_FAILURE, "The waiting service has been interrupted");
 		}
 		return internalThread.getDataWaiter().isNotified();
 	}
 
-	private boolean waitThreadDatas(int timeout) {
-		if(timeout == JposConst.JPOS_FOREVER) {
+	private boolean waitThreadDatas(int timeout) throws JposException {
+		if (timeout == JposConst.JPOS_FOREVER) {
 			return waitThreadDatas();
 		} else {
 			try {
 				internalThread.getDataWaiter().waitData(timeout);
-				
-			} catch (InterruptedException e) {
 
+			} catch (InterruptedException e) {
+				throw new JposException(JposConst.JPOS_E_FAILURE, "The waiting service has been interrupted");
 			}
 			return internalThread.getDataWaiter().isNotified();
-		}	
+		}
 	}
 }
