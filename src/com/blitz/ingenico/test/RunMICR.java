@@ -21,52 +21,51 @@ public class RunMICR {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		IngenicoMICRService service = new IngenicoMICRService();
+		EventCallbacks cb = new EventCallbacks() { // Lazy callback init ...
+
+			@Override
+			public BaseControl getEventSource() {
+				System.out.println("BaseControl");
+				return null;
+			}
+
+			@Override
+			public void fireStatusUpdateEvent(StatusUpdateEvent arg0) {
+				System.out.println("fireStatusUpdateEvent");
+
+			}
+
+			@Override
+			public void fireOutputCompleteEvent(OutputCompleteEvent arg0) {
+				System.out.println("fireOutputCompleteEvent");
+
+			}
+
+			@Override
+			public void fireErrorEvent(ErrorEvent arg0) {
+				System.out.println("fireErrorEvent");
+
+			}
+
+			@Override
+			public void fireDirectIOEvent(DirectIOEvent arg0) {
+				System.out.println("fireDirectIOEvent");
+
+			}
+
+			@Override
+			public void fireDataEvent(DataEvent arg0) {
+				IngenicoMICRService source = (IngenicoMICRService) arg0.getSource();
+				try {
+					System.out.println("Data Received : " + source.getRawData());
+				} catch (JposException e) {
+					e.printStackTrace();
+				}
+
+			}
+		};
 		try {
-			IngenicoMICRService service = new IngenicoMICRService();
-			EventCallbacks cb = new EventCallbacks() { // Lazy callback init ...
-
-				@Override
-				public BaseControl getEventSource() {
-					System.out.println("BaseControl");
-					return null;
-				}
-
-				@Override
-				public void fireStatusUpdateEvent(StatusUpdateEvent arg0) {
-					System.out.println("fireStatusUpdateEvent");
-
-				}
-
-				@Override
-				public void fireOutputCompleteEvent(OutputCompleteEvent arg0) {
-					System.out.println("fireOutputCompleteEvent");
-
-				}
-
-				@Override
-				public void fireErrorEvent(ErrorEvent arg0) {
-					System.out.println("fireErrorEvent");
-
-				}
-
-				@Override
-				public void fireDirectIOEvent(DirectIOEvent arg0) {
-					System.out.println("fireDirectIOEvent");
-
-				}
-
-				@Override
-				public void fireDataEvent(DataEvent arg0) {
-					IngenicoMICRService source = (IngenicoMICRService) arg0.getSource();
-					try {
-						System.out.println("Data Received : " + source.getRawData());
-					} catch (JposException e) {
-						e.printStackTrace();
-					}
-
-				}
-			};
-
 			System.out.println("##### Begin reader initialization.");
 			service.setCommPortNumber(1); // ADAPT THIS
 			System.out.println("##### Opening ...");
@@ -88,6 +87,8 @@ public class RunMICR {
 
 		} catch (JposException e) {
 			e.printStackTrace();
+		} finally {
+			System.exit(0);
 		}
 
 	}

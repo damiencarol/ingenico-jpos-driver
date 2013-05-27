@@ -41,7 +41,7 @@ public class IngenicoMICRService implements MICRService110 {
 	private int dataCount = 0;
 	private String rawData;
 	private boolean claimed = false;
-	
+
 	public void setCommPortNumber(int pCommPortNumber) throws JposException {
 		// save the port number
 		this.commPortNumber = pCommPortNumber;
@@ -49,66 +49,60 @@ public class IngenicoMICRService implements MICRService110 {
 			throw new JposException(JposConst.JPOS_E_FAILURE, "Invalid comm port number");
 		}
 	}
-	
+
 	@Override
 	public void open(String logicalName, EventCallbacks cb) throws JposException {
 		this.state = JposConst.JPOS_S_IDLE;
 		this.cb = cb;
 	}
-	
+
 	@Override
 	public void claim(int timeout) throws JposException {
 		try {
 			// Create the internal thread
 			this.internalThread = new IngenicoSerialThread("COM" + this.commPortNumber);
 			System.out.println(1);
-			// Wait that the communication thread is not busy
-			while (this.internalThread.isBusy() == true) {
-			}
+			// Wait the thread is not busy
+			waitThreadNotBusy();
 			System.out.println(2);
 			// Command the physical device to cancel insert operation
 			byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data);
 			System.out.println(3);
-			// Wait that the communication thread is not busy
-			while (this.internalThread.isBusy() == true) {
-			}
+			waitThreadNotBusy();
 			System.out.println(4);
 			// Command the physical device to eject check if their are one in
 			byte[] data2 = { INGENICO_EJECT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data2);
 			System.out.println(5);
 			// Wait that the communication thread is not busy
-			while (this.internalThread.isBusy() == true) {
-			}
+			waitThreadNotBusy();
 			System.out.println(6);
 			this.claimed = true;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new JposException(JposConst.JPOS_E_NOTCLAIMED, "Error in device preparation", e);
 		}
 	}
-	
+
 	@Override
 	public void setDeviceEnabled(boolean deviceEnabled) throws JposException {
 		if (deviceEnabled == true) {
 			// Wait that the communication thread is not busy
-			while (this.internalThread.isBusy() == true) {
-			}
+			waitThreadNotBusy();
 			// Command the physical device to cancel insert operation
 			byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data);
 			// Wait that the communication thread is not busy
-			while (this.internalThread.isBusy() == true) {
-			}
+			waitThreadNotBusy();
 			// Command the physical device to eject check if their are one in
 			byte[] data2 = { INGENICO_EJECT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data2);
 			// Wait that the communication thread is not busy
-			while (this.internalThread.isBusy() == true) {
-			}
+			waitThreadNotBusy();
 		}
 	}
-	
+
 	/**
 	 * TODO call CANCEL_INSERT with a timeout
 	 */
@@ -123,66 +117,42 @@ public class IngenicoMICRService implements MICRService110 {
 		}
 
 		// Throw INSERT COMMAND
-		while (this.internalThread.isBusy() == true) {
-		}
+		waitThreadNotBusy();
 
 		byte[] data = { INGENICO_INSERT_CHECK };
 		this.internalThread.sendSimpleOrderMessage(data);
 		// wait command is received
-		while (this.internalThread.isBusy() == true) {
-		}
+		waitThreadNotBusy();
 
 		this.internalThread.clearLines();
-
-		// If timeout is set to forever
-		if (timeout == JposConst.JPOS_FOREVER) {
-			// wait a check information
-			while (this.internalThread.getLines().size() == 0) {
-				if (this.internalThread.getErrorMessages().size() > 0) {
-					for (int i = 0; i < this.internalThread.getErrorMessages().size(); i++) {
-						System.err.println("[" + new String(this.internalThread.getErrorMessages().get(i)) + "]");
-					}
-					throw new JposException(MICRConst.JPOS_EMICR_BADDATA, "");
-				}
-			}
-		} else {
-			int timeoutPassed = 0;
-			while (this.internalThread.isBusy() != false) {
-				if (timeoutPassed > timeout) {
-					throw new JposException(JposConst.JPOS_E_TIMEOUT, "The specified time has elapsed without the form being properly inserted");
-				}
-				timeoutPassed += 100;
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+		
+		if(!waitThreadDatas(timeout)) {
+			throw new JposException(JposConst.JPOS_E_TIMEOUT, "The specified time has elapsed without the form being properly inserted");
 		}
 
 		// Change state to idle
 		this.state = JposConst.JPOS_S_IDLE;
 	}
-	
+
 	@Override
 	public void endInsertion() throws JposException {
-		//If datas has been read
+		// If datas has been read
 		if (this.internalThread.getLines().size() > 0) {
 			this.dataEvent = new DataEvent(this, 0);
 			this.dataCount = 1;
 
 			this.rawData = new String(this.internalThread.getLines().get(0));
 
-			if(cb != null) {
+			if (cb != null) {
 				this.cb.fireDataEvent(this.dataEvent);
 			}
-			
+
 		} else {
 			ErrorEvent error = new ErrorEvent(this, JposConst.JPOS_E_EXTENDED, 0, 0, 0);
 			this.cb.fireErrorEvent(error);
 		}
 	}
-	
+
 	@Override
 	public void beginRemoval(int timeout) throws JposException {
 
@@ -190,36 +160,22 @@ public class IngenicoMICRService implements MICRService110 {
 		this.state = JposConst.JPOS_S_BUSY;
 
 		// Wait the device is not busy
-		while (this.internalThread.isBusy() == true) {
-		}
+		waitThreadNotBusy();
 		// Throw INSERT COMMAND
 		byte[] data = { INGENICO_EJECT_CHECK };
 		this.internalThread.sendSimpleOrderMessage(data);
 		// wait command is received
-		while (this.internalThread.isBusy() == true) {
-		}
+		waitThreadNotBusy();
 
-		int timeoutPassed = 0;
 		// Wait that reader release check
-		while (this.internalThread.isBusy() != false) {
-			if (timeout > 0) {
-				if (timeoutPassed > timeout) {
-					throw new JposException(JposConst.JPOS_E_TIMEOUT, "");
-				}
-				// Wait 100 milliseconds and save that time
-				timeoutPassed += 100;
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+		if(!waitThreadDatas(timeout)) {
+			throw new JposException(JposConst.JPOS_E_TIMEOUT, "Timeout");
 		}
 
 		// Change state to busy
 		this.state = JposConst.JPOS_S_IDLE;
 	}
-	
+
 	@Override
 	public void release() throws JposException {
 
@@ -235,13 +191,13 @@ public class IngenicoMICRService implements MICRService110 {
 		this.claimed = false;
 		this.state = JposConst.JPOS_S_IDLE;
 	}
-	
+
 	@Override
 	public void close() throws JposException {
 		this.claimed = false;
 		this.state = JposConst.JPOS_S_CLOSED;
 	}
-	
+
 	@Override
 	public int getState() throws JposException {
 		return this.state;
@@ -251,7 +207,7 @@ public class IngenicoMICRService implements MICRService110 {
 	public void clearInputProperties() throws JposException {
 		this.rawData = null;
 	}
-	
+
 	@Override
 	public void clearInput() throws JposException {
 		this.dataCount = 0;
@@ -434,7 +390,7 @@ public class IngenicoMICRService implements MICRService110 {
 	public void checkHealth(int level) throws JposException {
 		// TODO Auto-generated method stub
 
-	}	
+	}
 
 	@Override
 	public void directIO(int command, int[] data, Object object) throws JposException {
@@ -497,5 +453,51 @@ public class IngenicoMICRService implements MICRService110 {
 
 	@Override
 	public void deleteInstance() throws JposException {
+	}
+
+	private boolean waitThreadNotBusy() {
+		try {
+			internalThread.getBusyWaiter().waitNotBusy();
+		} catch (InterruptedException e) {
+
+		}
+		return internalThread.getBusyWaiter().isNotified();
+	}
+	
+	private boolean waitThreadNotBusy(int timeout) {
+		if(timeout == JposConst.JPOS_FOREVER) {
+			return waitThreadDatas();
+		} else {
+			try {
+				internalThread.getBusyWaiter().waitNotBusy(timeout);
+				
+			} catch (InterruptedException e) {
+
+			}
+			return internalThread.getBusyWaiter().isNotified();
+		}
+	}
+
+	private boolean waitThreadDatas() {
+		try {
+			internalThread.getDataWaiter().waitData();
+		} catch (InterruptedException e) {
+
+		}
+		return internalThread.getDataWaiter().isNotified();
+	}
+
+	private boolean waitThreadDatas(int timeout) {
+		if(timeout == JposConst.JPOS_FOREVER) {
+			return waitThreadDatas();
+		} else {
+			try {
+				internalThread.getDataWaiter().waitData(timeout);
+				
+			} catch (InterruptedException e) {
+
+			}
+			return internalThread.getDataWaiter().isNotified();
+		}	
 	}
 }

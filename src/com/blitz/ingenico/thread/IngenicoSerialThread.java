@@ -30,9 +30,25 @@ import java.util.List;
 import jpos.JposConst;
 import jpos.JposException;
 
+import com.blitz.ingenico.thread.concurrency.WaitDataHelper;
+import com.blitz.ingenico.thread.concurrency.WaitNotBusyHelper;
 import com.blitz.utils.SpecialByteChar;
 
+
 public class IngenicoSerialThread implements Runnable {
+
+	private final WaitNotBusyHelper busyWaiter = new WaitNotBusyHelper();
+
+	public WaitNotBusyHelper getBusyWaiter() {
+		return this.busyWaiter;
+	}
+
+	private final WaitDataHelper dataWaiter = new WaitDataHelper();
+
+	public WaitDataHelper getDataWaiter() {
+		return this.dataWaiter;
+	}
+
 	private boolean busy;
 
 	/**
@@ -138,6 +154,7 @@ public class IngenicoSerialThread implements Runnable {
 			int busyCount = 0;
 
 			while (true) {
+				// System.out.println(">> Thread State - " + state);
 				switch (state) {
 
 				// Repos
@@ -159,6 +176,10 @@ public class IngenicoSerialThread implements Runnable {
 							busyCount++;
 							if (busyCount > 6) {
 								this.busy = false;
+								synchronized (busyWaiter) {
+									// Notify that not busy
+									busyWaiter.notify();
+								}
 							}
 						}
 					}
@@ -300,22 +321,35 @@ public class IngenicoSerialThread implements Runnable {
 						byte lrcReceived = receiveChar(serialPort);
 
 						if (lrcReceived == lrcComputed) {
+							// this was a successful receiving
 							sendChar(serialPort, SpecialByteChar.ACK);
 							lrcComputed = 0;
 
-							// Add check signature
-							if (dataReceived.length == 48 && dataReceived[0] == 51) {
-								this.lines.add(dataReceived.clone());
+							if (dataReceived[0] == 0x20 || dataReceived[1] != 0x30) {
+								// bad order or error while process
+								this.errorMessages.add(dataReceived.clone());
 							} else {
-								// ERROR information
-								if (dataReceived.length > 2) {
-									String thirdCara = new String(dataReceived.clone()).substring(0, 2);
-
-									if (thirdCara.charAt(1) != '0') {
-										this.errorMessages.add(dataReceived.clone());
-									}
-								}
+								// good datas
+								this.lines.add(dataReceived.clone());
 							}
+							// notify that datas are available
+							dataWaiter.notifyData();
+
+							// // Add check signature
+							// if (dataReceived.length == 48 && dataReceived[0]
+							// == 51) {
+							// this.lines.add(dataReceived.clone());
+							// } else {
+							// // ERROR information
+							// if (dataReceived.length > 2) {
+							// String thirdCara = new
+							// String(dataReceived.clone()).substring(0, 2);
+							//
+							// if (thirdCara.charAt(1) != '0') {
+							// this.errorMessages.add(dataReceived.clone());
+							// }
+							// }
+							// }
 
 							timeOut = 0;
 							state = IngenicoSerialThreadState.RC_WAIT_EOT;
