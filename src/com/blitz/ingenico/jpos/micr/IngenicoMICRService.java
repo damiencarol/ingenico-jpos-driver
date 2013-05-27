@@ -17,6 +17,7 @@
 
 package com.blitz.ingenico.jpos.micr;
 
+import com.blitz.ingenico.IngenicoFunction;
 import com.blitz.ingenico.thread.IngenicoSerialThread;
 
 import jpos.JposConst;
@@ -28,10 +29,6 @@ import jpos.services.EventCallbacks;
 import jpos.services.MICRService110;
 
 public class IngenicoMICRService implements MICRService110 {
-
-	private static final byte INGENICO_CANCEL_INSERT_CHECK = 0x30;
-	private static final byte INGENICO_INSERT_CHECK = 0x33;
-	private static final int INGENICO_EJECT_CHECK = 0x34;
 
 	private IngenicoSerialThread internalThread = null;
 	private int commPortNumber;
@@ -66,13 +63,13 @@ public class IngenicoMICRService implements MICRService110 {
 			waitThreadNotBusy();
 			System.out.println(2);
 			// Command the physical device to cancel insert operation
-			byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
+			byte[] data = { IngenicoFunction.INGENICO_CANCEL_INSERT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data);
 			System.out.println(3);
 			waitThreadNotBusy();
 			System.out.println(4);
 			// Command the physical device to eject check if their are one in
-			byte[] data2 = { INGENICO_EJECT_CHECK };
+			byte[] data2 = { IngenicoFunction.INGENICO_EJECT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data2);
 			System.out.println(5);
 			// Wait that the communication thread is not busy
@@ -91,12 +88,12 @@ public class IngenicoMICRService implements MICRService110 {
 			// Wait that the communication thread is not busy
 			waitThreadNotBusy();
 			// Command the physical device to cancel insert operation
-			byte[] data = { INGENICO_CANCEL_INSERT_CHECK };
+			byte[] data = { IngenicoFunction.INGENICO_CANCEL_INSERT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data);
 			// Wait that the communication thread is not busy
 			waitThreadNotBusy();
 			// Command the physical device to eject check if their are one in
-			byte[] data2 = { INGENICO_EJECT_CHECK };
+			byte[] data2 = { IngenicoFunction.INGENICO_EJECT_CHECK };
 			this.internalThread.sendSimpleOrderMessage(data2);
 			// Wait that the communication thread is not busy
 			waitThreadNotBusy();
@@ -119,7 +116,7 @@ public class IngenicoMICRService implements MICRService110 {
 		// Throw INSERT COMMAND
 		waitThreadNotBusy();
 
-		byte[] data = { INGENICO_INSERT_CHECK };
+		byte[] data = { IngenicoFunction.INGENICO_INSERT_CHECK };
 		this.internalThread.sendSimpleOrderMessage(data);
 		// wait command is received
 		waitThreadNotBusy();
@@ -166,7 +163,7 @@ public class IngenicoMICRService implements MICRService110 {
 		// Wait the device is not busy
 		waitThreadNotBusy();
 		// Throw INSERT COMMAND
-		byte[] data = { INGENICO_EJECT_CHECK };
+		byte[] data = { IngenicoFunction.INGENICO_EJECT_CHECK };
 		this.internalThread.sendSimpleOrderMessage(data);
 		// wait command is received
 		waitThreadNotBusy();
