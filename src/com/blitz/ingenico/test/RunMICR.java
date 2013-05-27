@@ -62,7 +62,6 @@ public class RunMICR {
 				} catch (JposException e) {
 					e.printStackTrace();
 				}
-
 			}
 		};
 		try {

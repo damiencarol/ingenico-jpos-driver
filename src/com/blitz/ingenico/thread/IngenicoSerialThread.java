@@ -346,6 +346,7 @@ public class IngenicoSerialThread implements Runnable {
 								this.lines.add(dataReceived.clone());
 							}
 							// notify that datas are available
+							//System.out.println(">> Notify Datas OK");
 							dataWaiter.notifyData();
 
 							// // Add check signature
@@ -528,6 +529,12 @@ public class IngenicoSerialThread implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.print("RAW Data send : ");
+		for(int i = 0; i < datasToSend.length; i++) {
+			System.out.print(Integer.toHexString(datasToSend[i]));
+			System.out.print(' ');
+		}
+		System.out.println();
 	}
 
 	/**

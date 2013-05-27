@@ -116,7 +116,7 @@ public class IngenicoMICRService implements MICRService110 {
 		// Throw INSERT COMMAND
 		waitThreadNotBusy();
 
-		byte[] data = { IngenicoFunction.INGENICO_INSERT_CHECK };
+		byte[] data = { IngenicoFunction.INGENICO_INSERT_AND_READ_CHECK };
 		this.internalThread.sendSimpleOrderMessage(data);
 		// wait command is received
 		waitThreadNotBusy();
@@ -162,7 +162,7 @@ public class IngenicoMICRService implements MICRService110 {
 		}
 		// Wait the device is not busy
 		waitThreadNotBusy();
-		// Throw INSERT COMMAND
+		// Throw EJECT COMMAND
 		byte[] data = { IngenicoFunction.INGENICO_EJECT_CHECK };
 		this.internalThread.sendSimpleOrderMessage(data);
 		// wait command is received
