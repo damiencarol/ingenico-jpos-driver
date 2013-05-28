@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE JposEntries PUBLIC "-//JavaPOS//DTD//EN"
+                             "jpos/res/jcl.dtd">
+<JposEntries>
+	<!--Saved by JavaPOS jpos.config/loader (JCL) version 2.1.0-RC3 on 10/26/04 
+		8:17 AM -->
+	<JposEntry logicalName="defaultMICR">
+		<creation
+			factoryClass="com.blitz.ingenico.jpos.micr.IngenicoMICRServiceInstanceFactory"
+			serviceClass="com.blitz.ingenico.jpos.micr.IngenicoMICRService" />
+		<vendor name="Blitz B.S." url="http://www.blitzbs.com" />
+		<jpos category="MICR" version="1.10" />
+		<product description="JavaPOS driver for Ingenico MICR device"
+			name="Xyz Virtual LineDisplay Service for JavaPOS(TM) Standard" url="http://www.javapos.com" />
+		<prop name="portName" value="1" />
+	</JposEntry>
+</JposEntries>
