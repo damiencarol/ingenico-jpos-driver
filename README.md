@@ -34,6 +34,48 @@ Download, extract and add RXTXcomm.jar to your build path.
 *If you want to run the driver, you also need the native libraries, keep the extracted folder !*
 
 ## Build
-You can either import the source in your favorite IDE, configure the build path and let the IDE do the work for you, easy !
-
+You can either import the source in your favorite IDE, configure the build path and let the IDE do the work for you, easy ! Ask your IDE to generate a jar archive to be ready to run the driver. You don't have to incluse dependency libraries in the jar, but you can if you want. Run instructions will assume external libraries are NOT included in the generated archive.
 Or, you can build directly from the source. This section will be added in the futur. *Contribute if you feel so !*
+
+# Run instructions & Dependencies
+
+In order to run the driver, as no precompiled jar is provided *(futur feature)* you have to compile your own jar.
+
+If you haven't, follow the build instruction prior to the following run instructions.
+
+## Dependencies
+You should already have JPos and RXTX's JARs. You also needs them to run the driver. Add them to your classpath !
+
+### RXTX Native libraries
+RXTX needs to load native libraries in order to operate the serial port. 
+
+#### x86 environments
+If you run a x86 environment, you can use the native libraries you should have already downloaded with the RXTX's jar. Just pick the ones according to your OS. Be sure to 
+
+#### x64 environments
+If you are running a x64 environment, you can't use the official RXTX libraries 'cause they are only compiled for x86 environments !
+
+But ... ! As RXTX original project is open-source, someone re-compiled the libraries for x64 environments. Unfortunatly, it has not been recompiled for Mac OSX or Solaris. If you run OSX or Solaris, you have to use the x86 libraries.
+
+* [RXTX x64](http://www.cloudhopper.com/opensource/rxtx/) 
+
+Download the correct archive according to your environment.
+
+**Cloudhopper RXTX fork is bundled with a modified JAR, you don't HAVE to use this one as it is almost 100% compatible with the original RXTX API. You can still use the original JAR you download when you where building the project.** 
+
+#### All environments
+
+To install the native libraries, you have 2 options : 
+
+* Follow the instructions from the INSTALL file located at the root of the RXTX archive
+
+OR
+
+* Add the 2 natives libraries (.so or .dll) to your Java library path. 
+
+### Xerces
+Xerces is a XML parser written in Java. It's part of the Apache project. It is used by JPos to parse JPos devices configuration files.
+
+* Official website is currently down. Download Postest, it is bundled with a xerces.jar. Instrutions below.
+
+Download the jar and add it to the classpath.
