@@ -61,7 +61,7 @@ But ... ! As RXTX original project is open-source, someone re-compiled the libra
 
 Download the correct archive according to your environment.
 
-**Cloudhopper RXTX fork is bundled with a modified JAR, you don't HAVE to use this one as it is almost 100% compatible with the original RXTX API. You can still use the original JAR you download when you where building the project.** 
+**Cloudhopper RXTX fork is bundled with a modified JAR, you don't HAVE to use this one as it is almost 100% compatible with the original RXTX API. You can still use the original JAR you downloaded when you where building the project.** 
 
 #### All environments
 
@@ -79,3 +79,5 @@ Xerces is a XML parser written in Java. It's part of the Apache project. It is u
 * Official website is currently down. Download Postest, it is bundled with a xerces.jar. Instrutions below.
 
 Download the jar and add it to the classpath.
+
+*To continue ...*
