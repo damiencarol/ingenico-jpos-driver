@@ -34,7 +34,8 @@ Download, extract and add RXTXcomm.jar to your build path.
 *If you want to run the driver, you also need the native libraries, keep the extracted folder !*
 
 ## Build
-You can either import the source in your favorite IDE, configure the build path and let the IDE do the work for you, easy ! Ask your IDE to generate a jar archive to be ready to run the driver. You don't have to incluse dependency libraries in the jar, but you can if you want. Run instructions will assume external libraries are NOT included in the generated archive.
+You can either import the source in your favorite IDE, configure the build path and let the IDE do the work for you, easy ! Ask your IDE to generate a jar archive to be ready to run the driver. You don't have to include dependency libraries in the jar, but you can if you want. Run instructions will assume external libraries are NOT included in the generated archive.
+
 Or, you can build directly from the source. This section will be added in the futur. *Contribute if you feel so !*
 
 # Run instructions & Dependencies
