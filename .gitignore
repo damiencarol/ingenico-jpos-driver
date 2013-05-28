@@ -1,5 +1,7 @@
 /*
 /*/
 !/src/
+!/jpos/
+!jpos.xml
 !.gitignore
 !.README.md

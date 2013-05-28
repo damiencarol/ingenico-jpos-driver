@@ -5,6 +5,7 @@ import java.util.Date;
 
 import jpos.JposConst;
 import jpos.JposException;
+import jpos.POSPrinterConst;
 
 import com.blitz.ingenico.thread.IngenicoSerialThread;
 
@@ -93,11 +94,12 @@ public class IngenicoPOSPrinterService {
 	}
 
 	/**
-	 * Print some raw text 80 char max
+	 * Print on a check.
 	 * 
-	 * @param station
-	 * @param text
-	 * @throws JposException
+	 * @param station The printer station to be used. Maybe eith PTR_S_JOURNAL, PTR_S_RECEIPT or PTR_S_SLIP. Others are error.
+	 * If station is PTR_S_SLIP, the printer will print check datas. Otherwise the printer will print standard text.
+	 * @param text The already formatted text
+	 * @throws JposException If station does not exists, if text is empty or on print failure
 	 */
 	public void printNormal(int station, String text) throws JposException {
 		if (text == null || text.trim().length() == 0) {
@@ -106,7 +108,16 @@ public class IngenicoPOSPrinterService {
 
 		waitThreadNotBusy();
 
-		byte[] functions = { IngenicoFunction.INGENICO_PRINT_TEXT };
+		byte[] functions = null;
+		if(station == POSPrinterConst.PTR_S_RECEIPT || station == POSPrinterConst.PTR_S_JOURNAL) {
+			functions = new byte[1];
+			functions[0] =  IngenicoFunction.INGENICO_PRINT_TEXT;
+		} else if (station == POSPrinterConst.PTR_S_SLIP) {
+			functions = new byte[1];
+			functions[0] = IngenicoFunction.INGENICO_PRINT_CHECK;
+		} else {
+			throw new JposException(JposConst.JPOS_E_ILLEGAL, "The specified station does not exists");
+		}
 		byte[] datas = text.getBytes();
 		System.out.print("Input : ");
 		for(int i = 0; i < datas.length; i++) {
@@ -146,7 +157,7 @@ public class IngenicoPOSPrinterService {
 			builder.append(text);
 			textToSend = builder.toString();
 		}
-		this.printNormal(0, textToSend);
+		this.printNormal(POSPrinterConst.PTR_S_RECEIPT, textToSend);
 	}
 
 	public void printCheck(String amount, Date date, String place, String beneficiary) throws JposException {
@@ -215,7 +226,7 @@ public class IngenicoPOSPrinterService {
 
 		builder = new StringBuilder();
 		builder.append(amountToSend).append(dateToSend).append(placeToSend).append(beneficiaryToSend).append('f').append('9');
-		this.printNormal(0, builder.toString());
+		this.printNormal(POSPrinterConst.PTR_S_SLIP, builder.toString());
 	}
 
 	/**

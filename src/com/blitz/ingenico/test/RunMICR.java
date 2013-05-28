@@ -1,18 +1,46 @@
 package com.blitz.ingenico.test;
 
-import com.blitz.ingenico.jpos.micr.IngenicoMICRService;
+import java.net.URL;
+import java.net.URLClassLoader;
 
-import jpos.BaseControl;
 import jpos.JposConst;
 import jpos.JposException;
+import jpos.MICR;
 import jpos.events.DataEvent;
+import jpos.events.DataListener;
 import jpos.events.DirectIOEvent;
+import jpos.events.DirectIOListener;
 import jpos.events.ErrorEvent;
-import jpos.events.OutputCompleteEvent;
+import jpos.events.ErrorListener;
 import jpos.events.StatusUpdateEvent;
-import jpos.services.EventCallbacks;
+import jpos.events.StatusUpdateListener;
 
 public class RunMICR {
+	
+	private MICR micr = null;
+	private EventListener listener = new EventListener();
+	private class EventListener implements StatusUpdateListener, DirectIOListener, ErrorListener, DataListener{
+        public void statusUpdateOccurred( StatusUpdateEvent sue ){
+        }
+        
+        public void directIOOccurred( DirectIOEvent dioe){
+        }
+        
+        public void errorOccurred(ErrorEvent ee){
+            String msg = "Unknown Extended Error: ";
+            int errorcode = ee.getErrorCode();
+            System.out.println("Error occured "+errorcode);
+        }
+        
+        public void dataOccurred(DataEvent dataEvent) {
+            try {
+				System.out.println("Data after reading  : " + micr.getRawData());
+			} catch (JposException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    }
 
 	/**
 	 * Test function to run a CMC7 reading. Read code and adapt to your
@@ -20,76 +48,42 @@ public class RunMICR {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		IngenicoMICRService service = new IngenicoMICRService();
-		EventCallbacks cb = new EventCallbacks() { // Lazy callback init ...
-
-			@Override
-			public BaseControl getEventSource() {
-				System.out.println("BaseControl");
-				return null;
-			}
-
-			@Override
-			public void fireStatusUpdateEvent(StatusUpdateEvent arg0) {
-				System.out.println("fireStatusUpdateEvent");
-
-			}
-
-			@Override
-			public void fireOutputCompleteEvent(OutputCompleteEvent arg0) {
-				System.out.println("fireOutputCompleteEvent");
-
-			}
-
-			@Override
-			public void fireErrorEvent(ErrorEvent arg0) {
-				System.out.println("fireErrorEvent");
-
-			}
-
-			@Override
-			public void fireDirectIOEvent(DirectIOEvent arg0) {
-				System.out.println("fireDirectIOEvent");
-
-			}
-
-			@Override
-			public void fireDataEvent(DataEvent arg0) {
-				IngenicoMICRService source = (IngenicoMICRService) arg0.getSource();
-				try {
-					System.out.println("Data Received : " + source.getRawData());
-				} catch (JposException e) {
-					e.printStackTrace();
-				}
-			}
-		};
+	public static void main(String[] args) {	
+        System.out.println("----- BEGIN -----");
+		RunMICR run = new RunMICR();
+		run.start();
+	}
+	
+	public RunMICR() {
+		micr = new MICR();
+	}
+	
+	public void start() {
 		try {
-			System.out.println("##### Begin reader initialization.");
-			service.setCommPortNumber(1); // ADAPT THIS
 			System.out.println("##### Opening ...");
-			service.open("", cb);
+			micr.open("defaultMICR");
+			micr.addDataListener(listener);
+			micr.addDirectIOListener(listener);
+			micr.addErrorListener(listener);
+			micr.addStatusUpdateListener(listener);
 			System.out.println("##### Claiming ...");
-			service.claim(JposConst.JPOS_FOREVER);
+			micr.claim(0);
 			System.out.println("##### Begin Insertion ...");
-			service.beginInsertion(JposConst.JPOS_FOREVER);
+			micr.beginInsertion(JposConst.JPOS_FOREVER);
 			System.out.println("##### End Insertion ...");
-			service.endInsertion();
+			micr.endInsertion();
 			System.out.println("##### Begin Removal ...");
-			service.beginRemoval(JposConst.JPOS_FOREVER);
+			micr.beginRemoval(JposConst.JPOS_FOREVER);
 			System.out.println("##### End Removal ...");
-			service.endRemoval();
+			micr.endRemoval();
 			System.out.println("##### Release ...");
-			service.release();
+			micr.release();
 			System.out.println("##### Close ...");
-			service.close();
-
+			micr.close();
 		} catch (JposException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} finally {
-			System.exit(0);
 		}
-
 	}
 
 }

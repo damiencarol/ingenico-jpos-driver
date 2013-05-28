@@ -529,12 +529,12 @@ public class IngenicoSerialThread implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.print("RAW Data send : ");
-		for(int i = 0; i < datasToSend.length; i++) {
-			System.out.print(Integer.toHexString(datasToSend[i]));
-			System.out.print(' ');
-		}
-		System.out.println();
+//		System.out.print("RAW Data send : ");
+//		for(int i = 0; i < datasToSend.length; i++) {
+//			System.out.print(Integer.toHexString(datasToSend[i]));
+//			System.out.print(' ');
+//		}
+//		System.out.println();
 	}
 
 	/**
