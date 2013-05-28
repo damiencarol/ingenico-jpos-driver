@@ -12,7 +12,7 @@ Javadoc can be generated from the source files.
 
 # Build instructions & Dependencies
 
-Clone the source. The source folder will be refered as <src>.
+Clone the repo. The source folder will be refered as `<src>`.
 
 ## Dependencies
 In order to build the driver, you need to resolve some dependencies.
